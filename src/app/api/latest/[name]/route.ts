@@ -24,10 +24,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{n
   const data = await s3.send(command);
     
   const files = data.Contents?.
-    filter((obj) => obj.Key?.endsWith(".bin")).
+    filter((obj) => obj.Key?.endsWith(".ino.bin")).
     map((obj) => ({
-      key: obj.Key,
-      version: obj.Key?.split("/").pop()?.split(".bin")[0],
+      key: obj.Key!,
+      version: obj.Key!.split("/").pop()!.split(".ino.bin")[0],
       url: `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${obj.Key}`,
     })) || [];
   
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{n
   const versions = files.map((file) => file.version);
   semver.sort(versions as unknown as SemVer[]).reverse();
   
-  const file = files.find((file) => file.version === versions[0]);
-  
+  const file: { key: string, version: string, url: string } | undefined = files.find((file) => file.version === versions[0]);
+
   if (!file) {
     return Response.json({
       error: "File not found"
@@ -48,10 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{n
     Key: file.key,
   });
 
-  const url = (await getSignedUrl(s3, filegetcommand, { expiresIn: 3600 })).replace("https://", "http://"); // 1 hour
+   file.url = (await getSignedUrl(s3, filegetcommand, { expiresIn: 3600 })).replace("https://", "http://"); // 1 hour
   
-  return Response.json({
-    version: versions[0]?.replace(".ino", ""),
-    url
-  });
+  return Response.json(file);
 }

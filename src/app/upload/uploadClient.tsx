@@ -21,6 +21,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
     console.log(folders);
 
     const [files, setFiles] = useState<File[] | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     const dropZoneConfig = {
         maxFiles: 1,
@@ -36,17 +37,40 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
         },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            console.log(values);
-            toast(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-                    <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-                </pre>
-            );
-        } catch (error) {
+            if (!files || files.length === 0) {
+                toast.error("Please select a file to upload.");
+                return;
+            }
+            const file = files[0];
+            const formData = new FormData();
+            formData.append("version", values.version);
+            formData.append("organization", values.organization);
+            formData.append("file", file, file.name);
+
+            setSubmitting(true);
+            const response = await fetch(`/api/upload`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => "");
+                throw new Error(errorText || `Upload failed with status ${response.status}`);
+            }
+
+            const result = await response.json().catch(() => ({} as { message?: string }));
+            toast.success(result?.message ?? "File uploaded successfully.");
+            // Reset state
+            setFiles(null);
+            form.reset();
+        } catch (error: unknown) {
             console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
+            const errorMessage = error instanceof Error ? error.message : "Failed to submit the form. Please try again.";
+            toast.error(errorMessage);
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -74,7 +98,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
                 <FormField
                     control={form.control}
                     name="inoFile"
-                    render={({ field }) => (
+                    render={() => (
                         <FormItem>
                             <FormLabel>Select File</FormLabel>
                             <FormControl>
@@ -144,7 +168,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
                         </FormItem>
                     )}
                 />
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={submitting}>{submitting ? "Uploading..." : "Submit"}</Button>
             </form>
         </Form>
     )
