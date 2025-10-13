@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileInput, FileUploader, FileUploaderContent, FileUploaderItem } from "@/components/ui/file-upload"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { AuthPopup } from "@/components/ui/auth-popup"
 
 const formSchema = z.object({
     version: z.string().min(1).min(5).max(8),
@@ -18,10 +19,10 @@ const formSchema = z.object({
 });
 
 const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
-    console.log(folders);
-
     const [files, setFiles] = useState<File[] | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [showAuthPopup, setShowAuthPopup] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const dropZoneConfig = {
         maxFiles: 1,
@@ -37,10 +38,39 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
         },
     })
 
+    const handleAuthenticate = async (username: string, password: string): Promise<boolean> => {
+        try {
+            const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (response.ok) {
+                // Store auth token for upload requests
+                localStorage.setItem('authToken', `${username}:${password}`);
+                setIsAuthenticated(true);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Authentication error:', error);
+            return false;
+        }
+    };
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
             if (!files || files.length === 0) {
                 toast.error("Please select a file to upload.");
+                return;
+            }
+
+            // Check authentication first
+            if (!isAuthenticated) {
+                setShowAuthPopup(true);
                 return;
             }
             const file = files[0];
@@ -52,6 +82,9 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
             setSubmitting(true);
             const response = await fetch(`/api/upload`, {
                 method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
                 body: formData,
             });
 
@@ -170,6 +203,11 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
                 />
                 <Button type="submit" disabled={submitting}>{submitting ? "Uploading..." : "Submit"}</Button>
             </form>
+            <AuthPopup
+                isOpen={showAuthPopup}
+                onClose={() => setShowAuthPopup(false)}
+                onAuthenticate={handleAuthenticate}
+            />
         </Form>
     )
 }

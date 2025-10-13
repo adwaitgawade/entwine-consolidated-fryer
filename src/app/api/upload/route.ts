@@ -10,6 +10,27 @@ const s3 = new S3Client({
 const bucket = process.env.AWS_S3_BUCKET!;
 
 export async function POST(request: Request) {
+    // Check authentication first
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ message: "Authentication required" }), { 
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    const token = authHeader.substring(7);
+    const validUsername = process.env.UPLOAD_USERNAME;
+    const validPassword = process.env.UPLOAD_PASSWORD;
+    
+    // Simple token validation (in production, use proper JWT or session tokens)
+    if (token !== `${validUsername}:${validPassword}`) {
+        return new Response(JSON.stringify({ message: "Invalid authentication token" }), { 
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
     const formData = await request.formData();
     const version = String(formData.get("version") ?? "");
     const organization = String(formData.get("organization")).replace("/", "");
@@ -23,10 +44,7 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Create S3 key following the convention: organization/version.ino.bin
-    console.log('Organization', organization);
-    console.log('Version', version);
     const s3Key = `${organization}/${version}.ino.bin`;
-    console.log('S3 Key', s3Key);
     // Upload to S3
     const command = new PutObjectCommand({
         Bucket: bucket,
