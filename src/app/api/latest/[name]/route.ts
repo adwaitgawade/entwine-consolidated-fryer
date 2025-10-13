@@ -1,21 +1,12 @@
-import type { NextRequest } from "next/server";
-import { GetObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+import { s3, bucket } from "@/lib/aws";
 import semver, { SemVer } from "semver";
+import type { NextRequest } from "next/server";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
-const s3 = new S3Client({
-  region: "ap-south-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  }
-})
+import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{name:string}>}) {
   const { name } = await params;
   
-  const bucket = process.env.AWS_S3_BUCKET!;
-
   const command = new ListObjectsV2Command({
     Bucket: bucket,
     Prefix: name,
@@ -50,5 +41,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{n
 
    file.url = (await getSignedUrl(s3, filegetcommand, { expiresIn: 3600 })).replace("https://", "http://"); // 1 hour
   
-  return Response.json(file);
+  return Response.json(file,{
+      headers: {
+        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=60",
+      }
+    }
+  );
 }

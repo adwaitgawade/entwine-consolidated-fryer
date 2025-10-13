@@ -1,18 +1,9 @@
 import React from 'react'
-import { ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3'
+import { bucket, s3 } from '@/lib/aws';
 import FileUploadForm from './uploadClient';
+import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 const page = async () => {
-
-    const s3 = new S3Client({
-        region: process.env.AWS_REGION!,
-        credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        }
-    })
-
-    const bucket = process.env.AWS_S3_BUCKET!;
 
     const command = new ListObjectsV2Command({
         Bucket: bucket,
