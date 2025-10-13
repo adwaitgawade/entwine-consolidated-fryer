@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{n
     Key: file.key,
   });
 
-  const url = await getSignedUrl(s3, filegetcommand, { expiresIn: 3600 }); // 1 hour
+  const url = (await getSignedUrl(s3, filegetcommand, { expiresIn: 3600 })).replace("https://", "http://"); // 1 hour
   
   return Response.json({
     version: versions[0]?.replace(".ino", ""),
