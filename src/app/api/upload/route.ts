@@ -1,4 +1,4 @@
-import { bucket, uploadObjectToS3 } from "@/lib/aws";
+import { uploadObjectToS3 } from "@/lib/aws";
 
 export async function POST(request: Request) {
     // Check authentication first
@@ -38,9 +38,7 @@ export async function POST(request: Request) {
     const s3Key = `${organization}/${version}.ino.bin`;
 
     try {
-        await uploadObjectToS3(s3Key, buffer, file.type || 'application/octet-stream');
-        const s3Url = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
-        
+        const s3Url = await uploadObjectToS3(s3Key, buffer, file.type || 'application/octet-stream');        
         return Response.json({
             message: "File uploaded successfully to S3",
             url: s3Url,

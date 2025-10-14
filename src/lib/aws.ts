@@ -1,14 +1,17 @@
-import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+"use server"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
-export const s3 = new S3Client({
+const bucket = process.env.AWS_S3_BUCKET!;
+
+const s3 = new S3Client({
     region: process.env.AWS_REGION!,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     }
 })
-
+  
 export const getOrganizations = async () => {
     const command = new ListObjectsV2Command({
         Bucket: bucket,
@@ -54,7 +57,6 @@ export const uploadObjectToS3 = async (key: string, buffer: Buffer, contentType:
         Body: buffer,
         ContentType: contentType || 'application/octet-stream',
     });
-
     await s3.send(command);
+    return `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 }
-export const bucket = process.env.AWS_S3_BUCKET!;
