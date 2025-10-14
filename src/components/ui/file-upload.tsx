@@ -5,6 +5,7 @@ type DropzoneOptions = {
     maxFiles?: number
     maxSize?: number // in bytes
     multiple?: boolean
+    accept?: string[] // list of allowed file extensions
 }
 
 type FileUploaderContextValue = {
@@ -48,6 +49,7 @@ function FileUploader({
         maxFiles: dropzoneOptions?.maxFiles ?? 1,
         maxSize: dropzoneOptions?.maxSize ?? 1024 * 1024 * 5,
         multiple: dropzoneOptions?.multiple ?? false,
+        accept: dropzoneOptions?.accept ?? [],
     }
 
     const setFiles = React.useCallback(
@@ -78,8 +80,14 @@ function FileInput({ id, className, children, ...props }: FileInputProps) {
         inputRef.current?.click()
     }
 
+    const matchesAccept = (file: File) => {
+        if (!options.accept.length) return true
+        const lower = file.name.toLowerCase()
+        return options.accept.some((ext) => lower.endsWith(ext.toLowerCase()))
+    }
+
     const applyConstraints = (incoming: File[]) => {
-        const limited = incoming.filter((file) => file.size <= options.maxSize)
+        const limited = incoming.filter((file) => file.size <= options.maxSize && matchesAccept(file))
         const combined = options.multiple ? [...files, ...limited] : limited.slice(0, 1)
         const finalList = combined.slice(0, options.maxFiles)
         return finalList
@@ -142,6 +150,7 @@ function FileInput({ id, className, children, ...props }: FileInputProps) {
                 type="file"
                 multiple={options.multiple}
                 onChange={onChange}
+                accept={options.accept.join(',')}
                 className="hidden"
             />
         </div>

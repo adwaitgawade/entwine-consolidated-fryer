@@ -3,6 +3,7 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { CloudUpload, Paperclip } from "lucide-react"
@@ -19,6 +20,7 @@ const formSchema = z.object({
 });
 
 const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
+    const router = useRouter();
     const [files, setFiles] = useState<File[] | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -28,6 +30,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
         maxFiles: 1,
         maxSize: 1024 * 1024 * 4,
         multiple: false,
+        accept: [".bin", ".ino.bin"],
     };
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -74,6 +77,11 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
                 return;
             }
             const file = files[0];
+            const lower = file.name.toLowerCase();
+            if (!(lower.endsWith('.ino.bin') || lower.endsWith('.bin'))) {
+                toast.error("Only .bin or .ino.bin files are allowed.");
+                return;
+            }
             const formData = new FormData();
             formData.append("version", values.version);
             formData.append("organization", values.organization);
@@ -98,6 +106,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
             // Reset state
             setFiles(null);
             form.reset();
+            router.push("/");
         } catch (error: unknown) {
             console.error("Form submission error", error);
             const errorMessage = error instanceof Error ? error.message : "Failed to submit the form. Please try again.";
@@ -152,7 +161,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
                                                 &nbsp; or drag and drop
                                             </p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                SVG, PNG, JPG or GIF
+                                                Only .bin or .ino.bin files
                                             </p>
                                         </div>
                                     </FileInput>
@@ -168,7 +177,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
                                     </FileUploaderContent>
                                 </FileUploader>
                             </FormControl>
-                            <FormDescription>Select an .ino.bin file to upload.</FormDescription>
+                            <FormDescription>Select a .bin or .ino.bin file to upload.</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}

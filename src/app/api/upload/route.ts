@@ -31,6 +31,19 @@ export async function POST(request: Request) {
         return new Response(JSON.stringify({ message: "No file provided" }), { status: 400 });
     }
 
+    const fileName = (file.name || '').toLowerCase();
+    if (!(fileName.endsWith('.ino.bin') || fileName.endsWith('.bin'))) {
+        return new Response(JSON.stringify({ message: "Only .bin or .ino.bin files are allowed" }), { status: 400 });
+    }
+
+    // Basic validation for organization and version strings
+    if (!organization || /[^a-zA-Z0-9._-]/.test(organization)) {
+        return new Response(JSON.stringify({ message: "Invalid organization" }), { status: 400 });
+    }
+    if (!version || /[^0-9.]/.test(version)) {
+        return new Response(JSON.stringify({ message: "Invalid version" }), { status: 400 });
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
