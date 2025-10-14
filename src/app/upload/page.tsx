@@ -1,22 +1,15 @@
+"use server"
 import React from 'react'
-import { bucket, s3 } from '@/lib/aws';
 import FileUploadForm from './uploadClient';
-import { ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { getOrganizations } from '@/lib/aws';
 
 const page = async () => {
 
-    const command = new ListObjectsV2Command({
-        Bucket: bucket,
-        Delimiter: "/",
-    })
-
-    const data = await s3.send(command);
-
-    const folders = data.CommonPrefixes?.map(prefix => prefix.Prefix) || []
+    const organizations = await getOrganizations()
 
     return (
         <div>
-            <FileUploadForm folders={folders} />
+            <FileUploadForm folders={organizations} />
         </div>
     )
 }

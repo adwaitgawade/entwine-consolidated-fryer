@@ -1,5 +1,4 @@
-import { s3, bucket } from "@/lib/aws";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { bucket, uploadObjectToS3 } from "@/lib/aws";
 
 export async function POST(request: Request) {
     // Check authentication first
@@ -37,17 +36,9 @@ export async function POST(request: Request) {
 
     // Create S3 key following the convention: organization/version.ino.bin
     const s3Key = `${organization}/${version}.ino.bin`;
-    // Upload to S3
-    const command = new PutObjectCommand({
-        Bucket: bucket,
-        Key: s3Key,
-        Body: buffer,
-        ContentType: file.type || 'application/octet-stream',
-    });
 
     try {
-        await s3.send(command);
-        
+        await uploadObjectToS3(s3Key, buffer, file.type || 'application/octet-stream');
         const s3Url = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
         
         return Response.json({

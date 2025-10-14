@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { CloudUpload, Paperclip } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { AuthPopup } from "@/components/ui/auth-popup"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileInput, FileUploader, FileUploaderContent, FileUploaderItem } from "@/components/ui/file-upload"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { AuthPopup } from "@/components/ui/auth-popup"
 
 const formSchema = z.object({
     version: z.string().min(1).min(5).max(8),
@@ -190,7 +190,7 @@ const FileUploadForm = ({ folders }: { folders: (string | undefined)[] }) => {
                                     {folders.map((folder, i) => {
                                         return (
                                             <SelectItem key={folder ?? `idx-${i}`} value={folder ?? ""}>
-                                                {folder?.split("/")[0].toUpperCase()}
+                                                {folder?.toUpperCase()}
                                             </SelectItem>
                                         )
                                     })}
