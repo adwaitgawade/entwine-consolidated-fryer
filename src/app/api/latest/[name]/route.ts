@@ -13,12 +13,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{n
   const file: { key: string, version: string, url: string } | undefined = files.find((file: { version: string }) => file.version === versions[0]);
 
   if (!file) {
-    return Response.json({
-      error: "File not found"
-    }, { status: 404 });
-  }
+    return Response.json({data: null, success: false, status: 404, error: "File not found"},{ status: 404 })}
 
   file.url = await getObjectUrl(file.key);
   
-  return Response.json(file);
+  return Response.json({data: file, success: true, status: 200, error: null}, { status: 200 });
 }
