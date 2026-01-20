@@ -3,15 +3,17 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const bucket = process.env.AWS_S3_BUCKET!;
+const endpoint = process.env.CLOUDFLARE_S3_API!;
 
 const s3 = new S3Client({
+    endpoint,
     region: process.env.AWS_REGION!,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     }
 })
-  
+
 export const getOrganizations = async () => {
     const command = new ListObjectsV2Command({
         Bucket: bucket,
@@ -26,22 +28,22 @@ export const getVersions = async (organization: string) => {
     const command = new ListObjectsV2Command({
         Bucket: bucket,
         Prefix: organization,
-      })
-    
-      const data = await s3.send(command);
-        
-      const versions = data.Contents?.
+    })
+
+    const data = await s3.send(command);
+
+    const versions = data.Contents?.
         filter((obj) => obj.Key?.endsWith(".ino.bin")).
         map((obj) => ({
-          key: obj.Key!,
-          version: obj.Key!.split("/").pop()!.split(".ino.bin")[0],
-          url: `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${obj.Key}`,
+            key: obj.Key!,
+            version: obj.Key!.split("/").pop()!.split(".ino.bin")[0],
+            url: `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${obj.Key}`,
         })) || [];
-    
+
     return versions
 }
 
-export const getObjectUrl = async (key: string) => { 
+export const getObjectUrl = async (key: string) => {
     const command = new GetObjectCommand({
         Bucket: bucket,
         Key: key,
