@@ -48,7 +48,7 @@ export const getObjectUrl = async (key: string) => {
         Bucket: bucket,
         Key: key,
     });
-    const url = (await getSignedUrl(s3, command, { expiresIn: 3600 })).replace("https://", "http://"); // 1 hour
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
     return url
 }
 
