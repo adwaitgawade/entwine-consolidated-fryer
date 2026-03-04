@@ -1,4 +1,6 @@
 "use server"
+
+import semver from "semver";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
@@ -38,7 +40,8 @@ export const getVersions = async (organization: string) => {
             key: obj.Key!,
             version: obj.Key!.split("/").pop()!.split(".ino.bin")[0],
             url: `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${obj.Key}`,
-        })) || [];
+        })).
+        filter((obj) => semver.valid(obj.version) !== null) || [];
 
     return versions
 }
