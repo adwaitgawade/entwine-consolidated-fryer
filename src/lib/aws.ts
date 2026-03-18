@@ -74,7 +74,16 @@ export const getObjectUrl = async (key: string) => {
         ResponseContentType: 'application/json'
     });
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
-    return url
+
+    const cmd = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+    })
+
+    const response = await s3.send(cmd);
+    const data = await response.Body?.transformToString()
+
+    return { url, data }
 }
 
 export const uploadObjectToS3 = async (key: string, buffer: Buffer, contentType: string) => {
