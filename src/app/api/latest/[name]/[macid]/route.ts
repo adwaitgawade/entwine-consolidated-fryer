@@ -1,11 +1,12 @@
 import semver, { SemVer } from "semver";
 import type { NextRequest } from "next/server";
-import { getVersions, getObjectUrl } from "@/lib/aws";
+import { getObjectUrl, getJsonVersions, getVersions } from "@/lib/aws";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ name: string, macid: string }> }) {
     const { name, macid } = await params;
 
-    const files = await getVersions(name + "/" + macid);
+    const searchParams = request.nextUrl.searchParams;
+    const files = searchParams.get("type") == 'json' ? await getJsonVersions(name + "/" + macid) : await getVersions(name + "/" + macid);
 
     const versions = files.map((file: { version: string }) => file.version);
     semver.sort(versions as unknown as SemVer[]).reverse();

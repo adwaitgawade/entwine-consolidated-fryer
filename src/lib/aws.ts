@@ -46,6 +46,26 @@ export const getVersions = async (organization: string) => {
     return versions
 }
 
+export const getJsonVersions = async (organization: string) => {
+    const command = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: organization,
+    })
+
+    const data = await s3.send(command);
+
+    const versions = data.Contents?.
+        filter((obj) => obj.Key?.endsWith(".json")).
+        map((obj) => ({
+            key: obj.Key!,
+            version: obj.Key!.split("/").pop()!.split(".json")[0],
+            url: `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${obj.Key}`,
+        })).
+        filter((obj) => semver.valid(obj.version) !== null) || [];
+
+    return versions
+}
+
 export const getObjectUrl = async (key: string) => {
     const command = new GetObjectCommand({
         Bucket: bucket,
