@@ -70,6 +70,8 @@ export const getObjectUrl = async (key: string) => {
     const command = new GetObjectCommand({
         Bucket: bucket,
         Key: key,
+        ResponseContentDisposition: `attachment; filename="${key.split("/").pop()}"`,
+        ResponseContentType: 'application/json'
     });
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
     return url
