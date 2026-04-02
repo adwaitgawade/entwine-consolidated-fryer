@@ -27,9 +27,10 @@ export const getOrganizations = async () => {
 }
 
 export const getVersions = async (organization: string) => {
+    const prefix = organization.endsWith("/") ? organization : `${organization}/`;
     const command = new ListObjectsV2Command({
         Bucket: bucket,
-        Prefix: organization,
+        Prefix: prefix,
     })
 
     const data = await s3.send(command);
@@ -47,9 +48,10 @@ export const getVersions = async (organization: string) => {
 }
 
 export const getJsonVersions = async (organization: string) => {
+    const prefix = organization.endsWith("/") ? organization : `${organization}/`;
     const command = new ListObjectsV2Command({
         Bucket: bucket,
-        Prefix: organization,
+        Prefix: prefix,
     })
 
     const data = await s3.send(command);
