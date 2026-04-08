@@ -23,14 +23,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     file.url = url;
     const response = { ...file, data: type_ == 'json' ? JSON.parse(data!) : null };
 
-    ["id", "name"].forEach(key => {
-        delete response.data.device[key];
-        delete response.data.menu[key];
-    });
+    if (response.data) {
+        ["id", "name"].forEach(key => {
+            if (response.data.device) delete response.data.device[key];
+            if (response.data.menu) delete response.data.menu[key];
+        });
 
-    const raw: ConfigData = response.data
-    const processed = normalizeDoubleDip(raw);
-    response.data = processed
+        const raw: ConfigData = response.data
+        const processed = normalizeDoubleDip(raw);
+        response.data = processed
+    }
     return Response.json({ data: response, success: true, status: 200, error: null }, { status: 200 });
 }
 
